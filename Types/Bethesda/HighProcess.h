@@ -1,0 +1,95 @@
+#pragma once
+#include "MiddleHighProcess.h"
+
+class NiBSBoneLODController;
+class DialogueItem;
+class NiBillboardNode;
+
+class HighProcess : public MiddleHighProcess {
+public:
+	virtual		 ~HighProcess();
+	virtual void ClearDelayTimer();
+
+	BSSimpleList<DetectionState*>* pDetectedActorList;
+	BSSimpleList<TESObjectREFR*>   TempDetectList;
+	float                          fDetectListTimer;
+	float                          fIdleChatterTimer;
+	bool                           bSayGoodByePlayer;
+	TESObjectREFR*                 plastDetected;
+	float                          fTalkTimer;
+	MagicItem*                     DesiredSpellItem;
+	float                          fPackageEvalTimer;
+	float                          fUseItemTimer;
+	float                          fHoldAttackTimer;
+	float                          fInCombatNoDetectionTimer;
+	TESObjectREFR*                 pArraylastFourObjects[4];
+	int                            iArrowsFired;
+	bool                           bCheckDeadTalk;
+	bool                           bSkippedUpdate;
+	NiNode*                        pNode;
+	float                          fDelayTimer;
+	float                          fDistanceMoved;
+	float                          fTurnTime;
+	char                           cLastTurnDir;
+	float                          fEvaluateAquireTimer;
+	NiBSBoneLODController*         pBoneLOD;
+	int                            iLastBoneLOD;
+	__int16                        sAnimAction;
+	BSAnimGroupSequence*           pAnimSeq;
+	unsigned __int16               sMoveMode;
+	int                            iLast;
+	float                          fDetectionTimer;
+	__int16                        iLastDetection;
+	NiPoint3                       WeaponLastPos;
+	TESObjectREFR*                 pGreetActor;
+	float                          fSoundDelay;
+	TESGameSoundHandle*            pSoundHandle[2];
+	bool                           bGreetingFlag;
+	float                          fGreetingTimer;
+	float                          fIdleTimer;
+	float                          fDetectGreetTimer;
+	float                          fBreathTimer;
+	bool                           bHeadTrack;
+	float                          fVoiceTimer;
+	bool                           bWeaponAlertDrawn;
+	float                          fAwarePlayerTimer;
+	bool                           bDialoguewithPlayer;
+	DialogueItem*                  pgreettopic;
+	DIALOGUE_EMOTION               eLastSpeakingEmotion;
+	Actor*                         pDialogTarget;
+	bool                           bContinuingPackageforPC;
+	bool                           bactivateAnim;
+	float                          fScriptPackageEndTime;
+	float                          fHealthBarAlphaValue;
+	NiPointer<NiBillboardNode>     spHealthBarNode;
+	float                          fActorHealthPercentage;
+	float                          fHealthBarEmittanceValue;
+	int                            iNumberGuardsPersuing;
+	bool                           bStop;
+	NiPoint3                       pHorsePoint;
+	WadingWaterData*               pWadingWater;
+	float                          fReEquipArmorTimer;
+	bool                           bUnequippedArmorToSwim;
+	float                          fCurrentEncumbrance;
+	int                            iParalysis;
+	int                            iHasHealingSpell;
+	int                            iHasHealingPotion;
+	BSSimpleList<SpellItem*>*      pLeveledSpellList;
+	char                           cLastTurn;
+	bool                           bCurrentlyReanimating;
+	float                          fDetectionModifer;
+	float                          fDetectionModifierTimer;
+	LipSynchAnim*                  pLipSynicAnim;
+	bool                           bWaitingForLipFile;
+	bool                           bLipFileFailed;
+	FADE_STATE                     eFadeState;
+	float                          fFadeAlpha;
+	TESObjectREFR*                 pTeleportFadeRef;
+	TESObjectREFR*                 HeadTrackingTargets[5];
+	bool                           HeadTrackingTargetFlags[5];
+	TESObjectREFR*                 pLastTarget;
+	bool                           bForceRotate;
+	bool                           bForceCastCurrentSpell;
+};
+
+ASSERT_SIZE(HighProcess, 0x4B8);

@@ -1,0 +1,38 @@
+#pragma once
+#include <cstdint>
+
+enum class EFormFlags : uint32_t
+{
+	Master            = 0x1,
+	Altered           = 0x2,
+	Transfer          = 0x4,
+	Init              = 0x8,
+	NoCollision       = 0x10,
+	Delete            = 0x20,
+	ActorHasSpokenTo  = 0x40,
+	BorderRegion      = 0x40,
+	FireOff           = 0x80,
+	Droppped          = 0x100,
+	CastShadows       = 0x200,
+	Quest             = 0x400,
+	Persistent        = 0x400,
+	Ignore            = 0x1000,
+	MenuNotify        = 0x1000,
+	Empty             = 0x2000,
+	Destroyed         = 0x2000,
+	HasResults        = 0x2000,
+	Temporary         = 0x4000,
+	PartialData       = 0x4000,
+	Distant           = 0x8000,
+	HavokDeath        = 0x10000,
+	NeedChangeProcess = 0x20000,
+	OffLimit          = 0x20000,
+	Compressed        = 0x40000,
+	Targeted          = 0x40000,
+	StartsDead        = 0x80000,
+	Temp3D            = 0x80000,
+	IgnoreFriendHits  = 0x100000,
+	CenterOnCreation  = 0x100000,
+	StillLoading      = 0x200000,
+	NewPCDrop         = 0x400000,
+};
