@@ -575,16 +575,8 @@ namespace Scanner {
 	}
 
 	inline void Scan() {
-		constexpr auto module = "OblivionRemastered-Win64-Shipping.exe";
-		const auto hmod = GetModuleHandleA(module);
-		if (!hmod) {
-			constexpr auto emsg = "GetModuleHandleA returned nullptr.\n";
-			puts(emsg);
-			throw std::runtime_error(std::string(emsg));
-		}
-
 		MODULEINFO info{};
-		if (!GetModuleInformation(GetCurrentProcess(), hmod, &info, sizeof(info))) {
+		if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(nullptr), &info, sizeof(info))) {
 			constexpr auto emsg = "GetModuleInformation returned FALSE.\n";
 			puts(emsg);
 			throw std::runtime_error(std::string(emsg));
@@ -636,17 +628,9 @@ namespace Scanner {
 	}
 };
 
-inline uint8_t* ScanPattern(const char* pattern, const char* module = "OblivionRemastered-Win64-Shipping.exe") {
-	const auto handle = GetModuleHandleA(module);
-	if (!handle) {
-		char eMsg[512] = {};
-		(void)sprintf_s(eMsg, 512, "Failed to find pattern '%s'\nGetModuleHandleA returned nullptr.\n", pattern);
-		printf("%s\n", eMsg);
-		throw std::runtime_error(std::string(eMsg));
-	}
-
+inline uint8_t* ScanPattern(const char* pattern) {
 	MODULEINFO info{};
-	if (!GetModuleInformation(GetCurrentProcess(), handle, &info, sizeof(info))) {
+	if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(nullptr), &info, sizeof(info))) {
 		char eMsg[512] = {};
 		(void)sprintf_s(eMsg, 512, "Failed to find pattern '%s'\nGetModuleInformation returned FALSE.\n", pattern);
 		printf("%s\n", eMsg);
