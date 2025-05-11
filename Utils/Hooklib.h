@@ -478,16 +478,8 @@ namespace HookLib {
 	}
 
 	inline void Init() {
-		constexpr auto module = "OblivionRemastered-Win64-Shipping.exe";
-		const auto hmod = GetModuleHandleA(module);
-		if (!hmod) {
-			constexpr auto emsg = "GetModuleHandleA returned nullptr.\n";
-			puts(emsg);
-			throw std::runtime_error(std::string(emsg));
-		}
-
 		MODULEINFO info{};
-		if (!GetModuleInformation(GetCurrentProcess(), hmod, &info, sizeof(info))) {
+		if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(nullptr), &info, sizeof(info))) {
 			constexpr auto emsg = "GetModuleInformation returned FALSE.\n";
 			puts(emsg);
 			throw std::runtime_error(std::string(emsg));

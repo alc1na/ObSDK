@@ -132,6 +132,17 @@ public:
 	bool                                              bHasHandToHandEquip;
 	bool                                              bInitializing;
 	bool                                              bIsTargetMovingAway;
+
+	static inline CombatTarget* (__fastcall* pGetCombatTarget)(CombatController*, Actor*);
+	CombatTarget* __fastcall GetCombatTarget(Actor* apActor) {
+		return pGetCombatTarget(this, apActor);
+	}
+
+	static void InitSignatures() {
+		const Pattern pattern_CC_GetCombatTarget = "48 8B 41 ? 48 85 C0 74 ? 48 8B 48 ? 48 85 C9 75";
+
+		Scanner::Add(pattern_CC_GetCombatTarget, &pGetCombatTarget);
+	}
 };
 
 ASSERT_SIZE(CombatController, 0x270);

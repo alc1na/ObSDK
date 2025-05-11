@@ -574,7 +574,7 @@ namespace Scanner {
 		});
 	}
 
-	inline void Scan() {
+	inline bool Scan() {
 		MODULEINFO info{};
 		if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(nullptr), &info, sizeof(info))) {
 			constexpr auto emsg = "GetModuleInformation returned FALSE.\n";
@@ -602,8 +602,6 @@ namespace Scanner {
 					const auto [addr, skip] = pattern.check(curAddr);
 
 					if (addr) {
-						printf("Found pattern at 0x%p : %s\n", static_cast<void*>(addr), pattern.m_pattern.c_str());
-
 						// Skip in future
 						next = UINT32_MAX;
 						callback(addr);
@@ -619,12 +617,13 @@ namespace Scanner {
 		}
 
 		for (auto& [next, ph] : nextIndices) {
-			// Already found
+			// Did not find pattern
 			if (next != UINT32_MAX) {
-				const auto& [pattern, callback] = *ph;
-				printf("Failed to find pattern: %s\n", pattern.m_pattern.c_str());
+				return false;
 			}
 		}
+
+		return true;
 	}
 };
 
@@ -639,9 +638,8 @@ inline uint8_t* ScanPattern(const char* pattern) {
 
 	const auto base = static_cast<uint8_t*>(info.lpBaseOfDll);
 	const auto size = static_cast<size_t>(info.SizeOfImage);
-	printf("Base: 0x%p\nSize: %llx\n", static_cast<void*>(base), size);
 
-	Pattern pat{pattern};
+	const Pattern pat{pattern};
 	for (auto curAddr = base; curAddr <= (base + size - 64);) {
 		const auto [result, next] = pat.check(curAddr);
 		if (result) {
