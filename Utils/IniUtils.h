@@ -29,7 +29,7 @@ public:
 		}
 	}
 
-	int GetInt(const char* section, const char* label, const int iDefault) const {
-		return GetPrivateProfileIntA(section, label, iDefault, m_path.c_str());
+	uint32_t GetInt(const char* section, const char* label, const uint32_t iDefault) const {
+		return GetPrivateProfileIntA(section, label, static_cast<INT>(iDefault), m_path.c_str());
 	}
 };
