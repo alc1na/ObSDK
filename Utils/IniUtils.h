@@ -8,7 +8,7 @@ class IniFile {
 public:
 	explicit IniFile(const char* name) {
 		m_name = name;
-		m_path = (GetDLLFolder() / name / ".ini").string();
+		m_path = (GetDLLFolder() / name).string() + ".ini";
 	}
 
 	bool GetBool(const char* section, const char* label, const bool bDefault) const {

@@ -29,8 +29,8 @@ namespace Log {
 	}
 
 	inline void Init(const char* name) {
-		const auto logPath = GetDLLFolder() / name / ".log";
-		Detail::pFile = _fsopen(logPath.string().c_str(), "wb+", _SH_DENYNO);
+		const auto logPath = (GetDLLFolder() / name).string() + ".log";
+		Detail::pFile = _fsopen(logPath.c_str(), "wb+", _SH_DENYNO);
 		Detail::bInit = Detail::pFile != nullptr;
 
 #if defined(_DEBUG) || defined(_RELDBG)
