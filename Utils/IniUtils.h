@@ -1,20 +1,35 @@
 #pragma once
 #include <string>
 
-inline bool GetIniBool(const char* path, const char* section, const char* label, const bool defaultValue) {
-	char strOverride[10];
-	GetPrivateProfileStringA(section, label, defaultValue ? "true" : "false", strOverride, 9, path);
-	return !_strnicmp(strOverride, "true", 10);
-}
+class IniFile {
+	std::string m_path;
+	const char* m_name;
 
-inline float GetIniFloat(const char* path, const char* section, const char* label, const float defaultValue) {
-	const auto strDefault = std::to_string(defaultValue);
-	char strValue[20];
-	GetPrivateProfileStringA(section, label, strDefault.c_str(), strValue, 9, path);
-	try {
-		return std::stof(strValue);
+public:
+	explicit IniFile(const char* name) {
+		m_name = name;
+		m_path = (GetDLLFolder() / name / ".ini").string();
 	}
-	catch (const std::exception&) {
-		return defaultValue;
+
+	bool GetBool(const char* section, const char* label, const bool bDefault) const {
+		char strOverride[10];
+		GetPrivateProfileStringA(section, label, bDefault ? "true" : "false", strOverride, 9, m_path.c_str());
+		return !_strnicmp(strOverride, "true", 10);
 	}
-}
+
+	float GetFloat(const char* section, const char* label, const float fDefault) const {
+		const auto strDefault = std::to_string(fDefault);
+		char strValue[20];
+		GetPrivateProfileStringA(section, label, strDefault.c_str(), strValue, 19, m_path.c_str());
+		try {
+			return std::stof(strValue);
+		}
+		catch (const std::exception&) {
+			return fDefault;
+		}
+	}
+
+	int GetInt(const char* section, const char* label, const int iDefault) const {
+		return GetPrivateProfileIntA(section, label, iDefault, m_path.c_str());
+	}
+};

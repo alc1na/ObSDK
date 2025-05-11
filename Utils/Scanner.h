@@ -8,6 +8,7 @@
 #include <functional>
 
 #include "Hooklib.h"
+#include "Logger.h"
 
 // struct Pattern {
 // 	std::string m_pattern{};
@@ -424,8 +425,12 @@
 // 	}
 // };
 
+struct PatternSegment {
+	bool is_wildcard = false;
+	std::vector<uint8_t> value{};
+};
 
-struct Pattern {
+class Pattern {
 	std::vector<uint8_t> bytes{};
 	std::vector<bool> mask{};
 
@@ -438,23 +443,28 @@ struct Pattern {
 	size_t m_reloffStart = 0;
 	size_t m_reloffLength = 0;
 
+	uint8_t toByte(const char c) const {
+		if (c >= '0' && c <= '9') {
+			return c - '0';
+		}
+
+		if (c >= 'A' && c <= 'F') {
+			return c - 'A' + 10;
+		}
+
+		if (c >= 'a' && c <= 'f') {
+			return c - 'a' + 10;
+		}
+
+		return 0;
+	}
+
+public:
 	// ReSharper disable once CppNonExplicitConvertingConstructor
 	Pattern(const char* pattern) {
 		m_pattern = pattern;
 
 		bool setFirst = false;
-		const auto toByte = [](const char c) -> uint8_t {
-			if (c >= '0' && c <= '9') {
-				return c - '0';
-			}
-
-			if (c >= 'A' && c <= 'F') {
-				return c - 'A' + 10;
-			}
-
-			return 0;
-			};
-
 		size_t bufIdx = 0;
 		for (size_t i = 0; i < m_pattern.size(); i++) {
 			if (pattern[i] == ' ') {
@@ -493,6 +503,10 @@ struct Pattern {
 		m_reloffLength = reloffLen;
 	}
 
+	std::string GetPatternString() const {
+		return m_pattern;
+	}
+
 	// Returns pointer if found + minimum number of bytes until pattern should be scanned again
 	std::tuple<uint8_t*, size_t> check(const void* _addr) const {
 		const auto addr = const_cast<uint8_t*>(static_cast<const uint8_t*>(_addr));
@@ -506,8 +520,7 @@ struct Pattern {
 			const auto mem = addr[i];
 
 			if (mem == m_first) {
-				if (i > 0) {
-				}
+				if (i > 0) {}
 			}
 
 			// Found next potential pattern starting point
@@ -562,13 +575,13 @@ namespace Scanner {
 		});
 	}
 
-	inline void AddInlineHook(const Pattern& pat, void(*hook)()) {
+	inline void AddInlineHook(const Pattern& pat, void (*hook)()) {
 		handlers.emplace_back(pat, [=](uint8_t* addr) {
 			HookLib::CreateInlineHook(addr, hook);
 		});
 	}
 
-	inline void AddInlineHook(const Pattern& pat, void(*hook)(uint8_t*)) {
+	inline void AddInlineHook(const Pattern& pat, void (*hook)(uint8_t*)) {
 		handlers.emplace_back(pat, [=](uint8_t* addr) {
 			HookLib::CreateInlineHook(addr, hook);
 		});
@@ -577,50 +590,52 @@ namespace Scanner {
 	inline bool Scan() {
 		MODULEINFO info{};
 		if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(nullptr), &info, sizeof(info))) {
-			constexpr auto emsg = "GetModuleInformation returned FALSE.\n";
-			puts(emsg);
-			throw std::runtime_error(std::string(emsg));
-		}
-
-		std::vector<std::tuple<size_t, pattern_info_t*>> nextIndices{};
-		for (auto& handler : handlers) {
-			nextIndices.emplace_back(0, &handler);
+			Log::Error("GetModuleInformation returned FALSE.\n");
+			return false;
 		}
 
 		const auto base = static_cast<uint8_t*>(info.lpBaseOfDll);
 		const auto size = static_cast<size_t>(info.SizeOfImage);
 
-		for (auto curAddr = base; curAddr <= (base + size - 32); curAddr++) {
-			for (auto& [next, ph] : nextIndices) {
+		std::vector<std::tuple<const handler_t*, uint8_t*>> foundPatterns{};
+		std::vector<std::tuple<size_t, pattern_info_t*>> nextIndices{};
+		for (auto& handler : handlers) {
+			nextIndices.emplace_back(0, &handler);
+		}
+
+		for (auto curAddr = base; curAddr < base + size; curAddr++) {
+			for (auto& [next, patternInfo] : nextIndices) {
 				// Already found
-				if (next == UINT32_MAX) {
+				if (!patternInfo) {
 					continue;
 				}
 
 				if (next == 0) {
-					const auto& [pattern, callback] = *ph;
+					const auto& [pattern, callback] = *patternInfo;
 					const auto [addr, skip] = pattern.check(curAddr);
 
 					if (addr) {
-						// Skip in future
-						next = UINT32_MAX;
-						callback(addr);
+						Log::Debug("Found pattern at 0x%p : %s\n", addr, pattern.GetPatternString().c_str());
+
+						patternInfo = nullptr;
+						foundPatterns.emplace_back(&callback, addr);
+						continue;
 					}
-					else {
-						next = skip - 1;
-					}
+
+					next = skip;
 				}
-				else {
-					next--;
-				}
+
+				next--;
 			}
 		}
 
-		for (auto& [next, ph] : nextIndices) {
-			// Did not find pattern
-			if (next != UINT32_MAX) {
-				return false;
-			}
+		if (foundPatterns.size() != nextIndices.size()) {
+			Log::Error("Failed to find all memory patterns.\n");
+			return false;
+		}
+
+		for (const auto& [handler, addr] : foundPatterns) {
+			(*handler)(addr);
 		}
 
 		return true;
@@ -630,16 +645,14 @@ namespace Scanner {
 inline uint8_t* ScanPattern(const char* pattern) {
 	MODULEINFO info{};
 	if (!GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(nullptr), &info, sizeof(info))) {
-		char eMsg[512] = {};
-		(void)sprintf_s(eMsg, 512, "Failed to find pattern '%s'\nGetModuleInformation returned FALSE.\n", pattern);
-		printf("%s\n", eMsg);
-		throw std::runtime_error(std::string(eMsg));
+		Log::Error("GetModuleInformation returned FALSE.\n");
+		return nullptr;
 	}
 
 	const auto base = static_cast<uint8_t*>(info.lpBaseOfDll);
 	const auto size = static_cast<size_t>(info.SizeOfImage);
 
-	const Pattern pat{pattern};
+	const Pattern pat{ pattern };
 	for (auto curAddr = base; curAddr <= (base + size - 64);) {
 		const auto [result, next] = pat.check(curAddr);
 		if (result) {
