@@ -191,7 +191,7 @@ public:
 	}
 
 	static void InitSignatures() {
-		const Pattern gPlayerCharacterSig = {"48 8B 0D 87 71 E7 ? ? ? ? 75", 3, 4};
+		const Pattern gPlayerCharacterSig = {"48 8B 0D ? ? ? ? 48 3B D9 75 ? F3 0F 2C 81 58 0A 00 00", 3, 4};
 
 		Scanner::Add(gPlayerCharacterSig, &singleton);
 	}
